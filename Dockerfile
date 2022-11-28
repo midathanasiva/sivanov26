@@ -1,7 +1,13 @@
-#FROM centos
-#RUN yum install -y java-11
-#COPY target/springboot-maven-course-micro-svc-0.0.1-SNAPSHOT.jar app.jar
-#ENTRYPOINT ["java","-jar","/app.jar"]
-FROM openjdk:11
-ADD target/*.jar app.jar
-ENTRYPOINT ["java","-jar","app.jar"]
+
+#FROM openjdk:11
+#ADD target/*.jar app.jar
+#ENTRYPOINT ["java","-jar","app.jar"]
+
+FROM tomcat:8-jre11
+
+RUN rm -rf /usr/local/tomcat/webapps/*
+
+COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
+
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
