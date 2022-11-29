@@ -1,62 +1,66 @@
-pipeline{
-    environment {
-    account = "${environment}" 
-    eks_cluster_name = "eks-${account}" 
-    artifacts_dir = "${env.WORKSPACE}/artifacts"
-    aws_region = "${params.aws_region}"
-    job_root_dir="${env.WORKSPACE}"
-    }
-    tools { 
-        maven 'maven-3.8.1' 
-       
-    }
-    agent {
-        label 'master'
-        }
-        stages{
-            stage('Initialize workspace') {
-        steps {
-        // Make sure the directory is clean
-        dir("${artifacts_dir}") {
-            deleteDir()
-        }
-        sh(script: "mkdir -p ${artifacts_dir}", label: 'Create artifacts directory')
-        }
-    }
-            stage('git stage'){
-                steps{
-                    git branch: 'main', url: 'https://github.com/cloudtechmasters/springboot-maven-course-micro-svc.git'
-                }
-            }
-            stage('build maven project '){
-                steps{
-                   sh 'mvn clean package'
-                }
-            }
-		stage('Generate kubeconfig for the cluster') {
-        steps {
-        script {
-            env.KUBECONFIG = "${artifacts_dir}/${eks_cluster_name}-kubeconfig"
-            sh 'chmod +x ${WORKSPACE}/generate_kubeconfig_eks.sh'
-        }
-        sh(script: '${WORKSPACE}/generate_kubeconfig_eks.sh', label: 'Generate kubeconfig file')
-        }
-    }
+pipeline {
     
-    stage('Get the cluster details') {
-        steps {
-        script {
-            sh '''kubectl apply -f deployment.yml 
-                  kubectl apply -f service.yml
-                  kubectl get all
-                '''
+    agent any
+    environment {
+        registry = '327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo'
+        registryCredential = 'jenkins-ec2-aws-ec2'
+        dockerimage = ''
+    }
+    stages{
+        stage("Checkout the project") {
+           steps{
+               git branch: 'main', url: 'https://github.com/midathanasiva/sivanov26.git'
+           } 
         }
+        stage("Build the package"){
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage("Sonar Quality Check"){
+		steps{
+		    script{
+		     withSonarQubeEnv(installationName: 'sonar-9', credentialsId: 'jenkins-sonar-token') {
+		     sh 'mvn sonar:sonar'
+	    	}
+	    	timeout(time: 1, unit: 'HOURS') {
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
+         }
+	    	}
+		    }
+		    
+		}
+         
+       }
+       stage('Building the Image') {
+        steps {
+            script {
+            dockerImage = docker.build registry + ":$BUILD_NUMBER"
         }
     }
+    }
+    stage ('Deploy the Image to Amazon ECR') {
+       steps {
+           script {
+           docker.withRegistry("http://" + registry, "ecr:ap-south-1:" + registryCredential ) {
+           dockerImage.push()
+     }
+
+    
+}
+}
+}
+}
+
+
+post {
+        success {
+            mail bcc: '', body: 'Pipeline build successfully', cc: '', from: 'sivasunshine2@gmail.com', replyTo: '', subject: 'The Pipeline success', to: 'sivasunshine2@gmail.com'
         }
-    post {
-	    cleanup {
-	          cleanWs(cleanWhenFailure: false)
-	    }
+        failure {  
+            mail bcc: '', body: 'Pipeline build not success', cc: '', from: 'sivasunshine2@gmail.com', replyTo: '', subject: 'The Pipeline failed', to: 'sivasunshine2@gmail.com'
+         } 
     }
 }
