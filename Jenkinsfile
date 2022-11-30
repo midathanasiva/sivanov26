@@ -1,9 +1,12 @@
 pipeline {
     
     agent any
+     tools{
+        maven 'maven-3'
+    }
     environment {
         registry = '327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo'
-        registryCredential = 'jenkins-ec2-aws-ec2'
+        registryCredential = 'jenkins-ecr-login-credentials'
         dockerimage = ''
     }
     stages{
@@ -16,6 +19,8 @@ pipeline {
             steps {
                 sh 'mvn clean package'
             }
+            
+            
         }
         stage("Sonar Quality Check"){
 		steps{
@@ -29,12 +34,10 @@ pipeline {
                   error "Pipeline aborted due to quality gate failure: ${qg.status}"
          }
 	    	}
-		    }
-		    
-		}
-         
-       }
-       stage('Building the Image') {
+    }
+}
+}   
+stage('Building the Image') {
         steps {
             script {
             dockerImage = docker.build registry + ":$BUILD_NUMBER"
@@ -47,14 +50,10 @@ pipeline {
            docker.withRegistry("http://" + registry, "ecr:ap-south-1:" + registryCredential ) {
            dockerImage.push()
      }
-
-    
 }
 }
 }
 }
-
-
 post {
         success {
             mail bcc: '', body: 'Pipeline build successfully', cc: '', from: 'sivasunshine2@gmail.com', replyTo: '', subject: 'The Pipeline success', to: 'sivasunshine2@gmail.com'
@@ -64,3 +63,4 @@ post {
          } 
     }
 }
+
