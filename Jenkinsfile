@@ -53,6 +53,14 @@ stage('Building the Image') {
 }
 }
 }
+
+    stage ("pull_imageFromEcrAndCreateContainer"){
+        steps{
+            ansiblePlaybook become: true, credentialsId: 'ansiblesshcred', disableHostKeyChecking: true, extras:"-e BUILD_NUMBER=$BUILD_NUMBER", installation: 'ansible', inventory: 'iphosts', playbook: 'loginecr.yml'
+
+
+        }
+    }
 }
 post {
         success {
@@ -63,4 +71,3 @@ post {
          } 
     }
 }
-
