@@ -6,4 +6,4 @@
     - name: pull the image from ECR to slave server
       shell: docker pull 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:11
     - name: Run the container using docker image
-      shell: docker run --name springbootcontainer2 -p 8081:8080  --detach 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:11
+      shell: docker run --name springbootcontainer2 -p 8080:8080  --detach 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:11
