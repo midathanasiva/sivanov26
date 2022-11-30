@@ -5,7 +5,7 @@
       shell: aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 327742897043.dkr.ecr.ap-south-1.amazonaws.com
     - name: pull the image from ECR to slave server
       shell: docker pull 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:{{BUILD_NUMBER}}
-      #shell: docker pull 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:11
+      #sh 'docker stop springbootcontainer"
+      #sh 'docker rm springbootcontainer'
     - name: Run the container using docker image
-      #shell: docker run --name springbootcontainer2 -p 8080:8080  --detach 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:11
-      shell: docker run --name springbootcontainer2 -p 8080:8080  --detach 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:{{BUILD_NUMBER}}
+      shell: docker run --name springbootcontainer -p 8080:8080  --detach 327742897043.dkr.ecr.ap-south-1.amazonaws.com/hellodatarepo:{{BUILD_NUMBER}}
